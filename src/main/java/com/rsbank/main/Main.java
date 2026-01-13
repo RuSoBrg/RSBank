@@ -5,25 +5,27 @@ import com.rsbank.components.Client;
 import com.rsbank.components.CurrentAccount;
 import com.rsbank.components.SavingsAccount;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-// 1.1.2 Creation of the main class for tests
 public class Main {
 
     static void main() {
-        // 1.1.2 Load the client list
+        // 1.1.2 Load clients
         List<Client> clients = generateClients(3);
-        // 1.1.2 Display clients
         displayClients(clients);
 
-        // 1.2.3 Load the account list (using the clients list)
+        // 1.2.3 Load accounts
         List<Account> accountList = generateAccounts(clients);
-        // 1.2.3 Display accounts
         displayAccounts(accountList);
+
+        // 1.3.1 Adapt accounts to Hashtable
+        Hashtable<Integer, Account> accountTable = createAccountTable(accountList);
+
+        // 1.3.1 Display accounts sorted by balance
+        displayAccountsSorted(accountTable);
     }
 
-    // 1.1.2 Generate Clients
+    // --- EXISTING METHODS ---
     public static List<Client> generateClients(int numberOfClients) {
         List<Client> clients = new ArrayList<>();
         for (int i = 1; i <= numberOfClients; i++) {
@@ -32,26 +34,42 @@ public class Main {
         return clients;
     }
 
-    // 1.1.2 Display Clients
     public static void displayClients(List<Client> clients) {
         System.out.println("\n--- Clients ---");
         clients.forEach(System.out::println);
     }
 
-    // 1.2.3 Generate Accounts
     public static List<Account> generateAccounts(List<Client> clients) {
         List<Account> accounts = new ArrayList<>();
         for (Client client : clients) {
-            // Create a Savings and Current account for each client
             accounts.add(new SavingsAccount("Savings", client));
             accounts.add(new CurrentAccount("Current", client));
         }
         return accounts;
     }
 
-    // 1.2.3 Display Accounts
     public static void displayAccounts(List<Account> accounts) {
-        System.out.println("\n--- Accounts ---");
+        System.out.println("\n--- Accounts (List) ---");
         accounts.forEach(System.out::println);
+    }
+
+    // --- NEW METHODS FOR 1.3.1 ---
+
+    // Convert List to Hashtable
+    public static Hashtable<Integer, Account> createAccountTable(List<Account> accounts) {
+        Hashtable<Integer, Account> accountTable = new Hashtable<>();
+        for (Account account : accounts) {
+            // Key = Account Number, Value = Account Object
+            accountTable.put(account.getAccountNumber(), account);
+        }
+        return accountTable;
+    }
+
+    // Display Map sorted by Balance (Ascending)
+    public static void displayAccountsSorted(Hashtable<Integer, Account> accountTable) {
+        System.out.println("\n--- Accounts Sorted by Balance ---");
+        accountTable.values().stream()
+                .sorted(Comparator.comparingDouble(Account::getBalance))
+                .forEach(System.out::println);
     }
 }
