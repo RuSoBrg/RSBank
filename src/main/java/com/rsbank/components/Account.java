@@ -24,7 +24,7 @@ public abstract class Account {
     public void setLabel(String label) { this.label = label; }
 
     public double getBalance() { return balance; }
-    // 1.2.1: Setter currently takes an amount (double). Will be modified in 1.3.5.
+    // 1.2.1: Setter currently takes an amount (double).
     public void setBalance(double balance) { this.balance = balance; }
 
     public int getAccountNumber() { return accountNumber; }
@@ -42,5 +42,23 @@ public abstract class Account {
                 ", accountNumber=" + accountNumber +
                 ", client=" + client.getName() + // displaying client name for clarity
                 '}';
+    }
+
+    // 1.3.5 Update balance based on Flow type
+    public void setBalance(Flow flow) {
+        if (flow instanceof Credit) {
+            this.balance += flow.getAmount();
+        } else if (flow instanceof Debit) {
+            this.balance -= flow.getAmount();
+        } else if (flow instanceof Transfert t) {
+            // If this is the target account, ADD money
+            if (this.accountNumber == t.getTargetAccountNumber()) {
+                this.balance += t.getAmount();
+            }
+            // If this is the issuer account, REMOVE money
+            if (this.accountNumber == t.getIssuingAccountNumber()) {
+                this.balance -= t.getAmount();
+            }
+        }
     }
 }

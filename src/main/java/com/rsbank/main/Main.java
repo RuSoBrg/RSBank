@@ -22,6 +22,13 @@ public class Main {
         // 1.3.4 Load Flows
         List<Flow> flows = generateFlows(accountList);
         System.out.println("\n--- Flows created: " + flows.size() + " ---");
+
+        // 1.3.5 Update Accounts
+        updateAccounts(flows, accountTable);
+
+        // Display results after updates
+        System.out.println("\n--- Accounts after updates ---");
+        displayAccountsSorted(accountTable);
     }
 
     public static List<Client> generateClients(int numberOfClients) {
@@ -66,33 +73,53 @@ public class Main {
                 .forEach(System.out::println);
     }
 
-    // --- NEW METHOD 1.3.4 ---
     public static List<Flow> generateFlows(List<Account> accounts) {
         List<Flow> flows = new ArrayList<>();
-        // 1.3.4 Date of flows = now + 2 days
         LocalDate flowDate = LocalDate.now().plusDays(2);
 
-        // 1. A debit of 50€ from account n°1
         flows.add(new Debit("Debit of 50", 1, 50.0, 1, true, flowDate));
 
-        // 2. A credit of 100.50€ on all current accounts
-        // Iterate through all accounts to find CurrentAccounts
         for (Account account : accounts) {
             if (account instanceof CurrentAccount) {
                 flows.add(new Credit("Credit Current", 2, 100.50, account.getAccountNumber(), true, flowDate));
             }
         }
 
-        // 3. A credit of 1500€ on all savings accounts
         for (Account account : accounts) {
             if (account instanceof SavingsAccount) {
                 flows.add(new Credit("Credit Savings", 3, 1500.0, account.getAccountNumber(), true, flowDate));
             }
         }
 
-        // 4. A transfer of 50 € from account n°1 to account n°2
         flows.add(new Transfert("Transfer", 4, 50.0, 2, true, flowDate, 1));
 
         return flows;
+    }
+
+    // --- NEW METHOD 1.3.5 ---
+    public static void updateAccounts(List<Flow> flows, Hashtable<Integer, Account> accountTable) {
+        for (Flow flow : flows) {
+            // 1. Update the Target Account
+            Account target = accountTable.get(flow.getTargetAccountNumber());
+            if (target != null) {
+                target.setBalance(flow);
+            }
+
+            // 2. If it is a Transfert, we must also update the Issuer Account
+            if (flow instanceof Transfert t) {
+                Account issuer = accountTable.get(t.getIssuingAccountNumber());
+                if (issuer != null) {
+                    issuer.setBalance(flow);
+                }
+            }
+        }
+
+        // Check for negative balance using Predicate and Optional
+        Optional<Account> negativeAccount = accountTable.values().stream()
+                .filter(a -> a.getBalance() < 0)
+                .findAny();
+
+        negativeAccount.ifPresent(account -> System.out.println("ALERT: Account with negative balance found: Account n°"
+                + account.getAccountNumber()));
     }
 }
