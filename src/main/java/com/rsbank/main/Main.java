@@ -1,10 +1,7 @@
 package com.rsbank.main;
 
-import com.rsbank.components.Account;
-import com.rsbank.components.Client;
-import com.rsbank.components.CurrentAccount;
-import com.rsbank.components.SavingsAccount;
-
+import com.rsbank.components.*;
+import java.time.LocalDate;
 import java.util.*;
 
 public class Main {
@@ -20,12 +17,13 @@ public class Main {
 
         // 1.3.1 Adapt accounts to Hashtable
         Hashtable<Integer, Account> accountTable = createAccountTable(accountList);
-
-        // 1.3.1 Display accounts sorted by balance
         displayAccountsSorted(accountTable);
+
+        // 1.3.4 Load Flows
+        List<Flow> flows = generateFlows(accountList);
+        System.out.println("\n--- Flows created: " + flows.size() + " ---");
     }
 
-    // --- EXISTING METHODS ---
     public static List<Client> generateClients(int numberOfClients) {
         List<Client> clients = new ArrayList<>();
         for (int i = 1; i <= numberOfClients; i++) {
@@ -53,23 +51,48 @@ public class Main {
         accounts.forEach(System.out::println);
     }
 
-    // --- NEW METHODS FOR 1.3.1 ---
-
-    // Convert List to Hashtable
     public static Hashtable<Integer, Account> createAccountTable(List<Account> accounts) {
         Hashtable<Integer, Account> accountTable = new Hashtable<>();
         for (Account account : accounts) {
-            // Key = Account Number, Value = Account Object
             accountTable.put(account.getAccountNumber(), account);
         }
         return accountTable;
     }
 
-    // Display Map sorted by Balance (Ascending)
     public static void displayAccountsSorted(Hashtable<Integer, Account> accountTable) {
         System.out.println("\n--- Accounts Sorted by Balance ---");
         accountTable.values().stream()
                 .sorted(Comparator.comparingDouble(Account::getBalance))
                 .forEach(System.out::println);
+    }
+
+    // --- NEW METHOD 1.3.4 ---
+    public static List<Flow> generateFlows(List<Account> accounts) {
+        List<Flow> flows = new ArrayList<>();
+        // 1.3.4 Date of flows = now + 2 days
+        LocalDate flowDate = LocalDate.now().plusDays(2);
+
+        // 1. A debit of 50€ from account n°1
+        flows.add(new Debit("Debit of 50", 1, 50.0, 1, true, flowDate));
+
+        // 2. A credit of 100.50€ on all current accounts
+        // Iterate through all accounts to find CurrentAccounts
+        for (Account account : accounts) {
+            if (account instanceof CurrentAccount) {
+                flows.add(new Credit("Credit Current", 2, 100.50, account.getAccountNumber(), true, flowDate));
+            }
+        }
+
+        // 3. A credit of 1500€ on all savings accounts
+        for (Account account : accounts) {
+            if (account instanceof SavingsAccount) {
+                flows.add(new Credit("Credit Savings", 3, 1500.0, account.getAccountNumber(), true, flowDate));
+            }
+        }
+
+        // 4. A transfer of 50 € from account n°1 to account n°2
+        flows.add(new Transfert("Transfer", 4, 50.0, 2, true, flowDate, 1));
+
+        return flows;
     }
 }
