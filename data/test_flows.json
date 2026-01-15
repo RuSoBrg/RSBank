@@ -1,0 +1,18 @@
+[
+  {
+    "comment": "JSON Credit 1",
+    "identifier": 90,
+    "amount": 500.0,
+    "targetAccountNumber": 1,
+    "effect": true,
+    "dateOfFlow": "2025-01-30"
+  },
+  {
+    "comment": "JSON Credit 2",
+    "identifier": 91,
+    "amount": 33.0,
+    "targetAccountNumber": 1,
+    "effect": true,
+    "dateOfFlow": "2025-01-30"
+  }
+]

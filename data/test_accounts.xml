@@ -1,0 +1,14 @@
+<accounts>
+    <account>
+        <label>XML Savings</label>
+        <balance>5000.0</balance>
+        <accountNumber>100</accountNumber>
+        <clientName>XML Client</clientName>
+    </account>
+    <account>
+        <label>XML Current</label>
+        <balance>200.0</balance>
+        <accountNumber>101</accountNumber>
+        <clientName>XML Client</clientName>
+    </account>
+</accounts>

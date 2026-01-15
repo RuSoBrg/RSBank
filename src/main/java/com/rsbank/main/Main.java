@@ -1,34 +1,113 @@
 package com.rsbank.main;
 
+import com.google.gson.*;
 import com.rsbank.components.*;
+import org.w3c.dom.*;
+import javax.xml.parsers.*;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 
 public class Main {
 
     static void main() {
-        // 1.1.2 Load clients
+        // --- PART 1 SETUP ---
         List<Client> clients = generateClients(3);
-        displayClients(clients);
-
-        // 1.2.3 Load accounts
         List<Account> accountList = generateAccounts(clients);
-        displayAccounts(accountList);
-
-        // 1.3.1 Adapt accounts to Hashtable
         Hashtable<Integer, Account> accountTable = createAccountTable(accountList);
-        displayAccountsSorted(accountTable);
-
-        // 1.3.4 Load Flows
         List<Flow> flows = generateFlows(accountList);
-        System.out.println("\n--- Flows created: " + flows.size() + " ---");
 
-        // 1.3.5 Update Accounts
+        // --- PART 2.1: LOAD FLOWS FROM JSON ---
+        // We add the JSON flows to our existing list of flows
+        List<Flow> jsonFlows = loadFlowsFromJson("data/test_flows.json");
+        if (jsonFlows != null) {
+            flows.addAll(jsonFlows);
+            System.out.println("Loaded " + jsonFlows.size() + " flows from JSON.");
+        }
+
+        // --- PART 2.2: LOAD ACCOUNTS FROM XML ---
+        // Load extra accounts and add them to Hashtable
+        List<Account> xmlAccounts = loadAccountsFromXml("data/test_accounts.xml");
+        if (xmlAccounts != null) {
+            for (Account acc : xmlAccounts) {
+                accountTable.put(acc.getAccountNumber(), acc);
+            }
+            System.out.println("Loaded " + xmlAccounts.size() + " accounts from XML.");
+        }
+
+        // --- PROCESS & DISPLAY ---
         updateAccounts(flows, accountTable);
-
-        // Display results after updates
-        System.out.println("\n--- Accounts after updates ---");
+        System.out.println("\n--- Final Account Status (Sorted) ---");
         displayAccountsSorted(accountTable);
+    }
+
+    // ---------------------------------------------------------
+    // 2.1 JSON Method (Advanced)
+    // ---------------------------------------------------------
+    public static List<Flow> loadFlowsFromJson(String filePath) {
+        List<Flow> flows = new ArrayList<>();
+        try {
+            Path path = Paths.get(filePath);
+            String jsonContent = new String(Files.readAllBytes(path));
+
+            // Custom Gson setup to handle LocalDate
+            Gson gson = new GsonBuilder()
+                    .registerTypeAdapter(LocalDate.class, (JsonDeserializer<LocalDate>) (json, type, context) ->
+                            LocalDate.parse(json.getAsString()))
+                    .create();
+
+            // Interpret the JSON objects as 'Credit' flows for this exercise
+            Credit[] creditArray = gson.fromJson(jsonContent, Credit[].class);
+            flows.addAll(Arrays.asList(creditArray));
+
+        } catch (Exception e) {
+            System.out.println("Error reading JSON: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return flows;
+    }
+
+    // ---------------------------------------------------------
+    // 2.2 XML Method (Advanced)
+    // ---------------------------------------------------------
+    public static List<Account> loadAccountsFromXml(String filePath) {
+        List<Account> accounts = new ArrayList<>();
+        try {
+            File xmlFile = new File(filePath);
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(xmlFile);
+            doc.getDocumentElement().normalize();
+
+            NodeList nList = doc.getElementsByTagName("account");
+
+            for (int i = 0; i < nList.getLength(); i++) {
+                Node node = nList.item(i);
+                if (node.getNodeType() == Node.ELEMENT_NODE) {
+                    Element element = (Element) node;
+
+                    String label = element.getElementsByTagName("label").item(0).getTextContent();
+                    String clientName = element.getElementsByTagName("clientName").item(0).getTextContent();
+                    // For XML loading, we create a dummy client just to satisfy the constructor
+                    Client dummyClient = new Client(clientName, "");
+
+                    // Assume XML accounts are Savings for this exercise
+                    Account acc = new SavingsAccount(label, dummyClient);
+
+                    // Manually set balance if provided (though standard logic usually starts at 0)
+                    String balanceStr = element.getElementsByTagName("balance").item(0).getTextContent();
+                    acc.setBalance(Double.parseDouble(balanceStr));
+
+                    accounts.add(acc);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error reading XML: " + e.getMessage());
+        }
+        return accounts;
     }
 
     public static List<Client> generateClients(int numberOfClients) {
